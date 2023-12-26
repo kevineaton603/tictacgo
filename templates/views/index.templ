@@ -1,0 +1,14 @@
+package views
+import "github.com/kevineaton603/tictacgo/templates/components"
+import "github.com/kevineaton603/tictacgo/models"
+
+templ Index(game models.Game) {
+    @components.Layout() {
+    <main>
+        <div class="container mx-auto flex flex-col gap-2">
+        @components.Board(game)
+        </div>
+    </main>
+
+    }
+}

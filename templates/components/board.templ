@@ -1,0 +1,11 @@
+package components
+import "github.com/kevineaton603/tictacgo/models"
+
+templ Board(game models.Game) {
+    <div class="container mx-auto grid grid-cols-3 gap-2">
+    for index, cell := range game.Board.Cells {
+        @Cell(index, cell, game.Id)
+    }
+    </div>
+    <button class="w-full p-2 rounded-md bg-slate-800 hover:bg-slate-700">RESET</button>
+}
