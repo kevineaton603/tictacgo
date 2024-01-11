@@ -1,50 +1,47 @@
 package main
 
 import (
-	"strconv"
+	"log"
+	"os"
 
-	"github.com/google/uuid"
+	"github.com/joho/godotenv"
+	"github.com/kevineaton603/tictacgo/handlers"
 	"github.com/kevineaton603/tictacgo/models"
-	"github.com/kevineaton603/tictacgo/templates/components"
-	"github.com/kevineaton603/tictacgo/templates/views"
 	"github.com/labstack/echo/v4"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-func RedirectToGame(c echo.Context) error {
-	var id = uuid.New()
-	return c.Redirect(301, "game/"+id.String())
+func init() {
+	envErr := godotenv.Load()
+	if envErr != nil {
+		log.Fatal("Error loading .env file")
+	}
 }
 
 func main() {
-	e := echo.New()
+	connectionURL := os.Getenv("CONNECTION_URL")
+	db, err := gorm.Open(postgres.Open(connectionURL), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	db.AutoMigrate(&models.Game{})
 
-	e.Static("/assets", "assets")
-	e.GET("/", RedirectToGame)
-	e.GET("game", RedirectToGame)
-	e.GET("/game/:id", func(c echo.Context) error {
-		id, err := uuid.Parse(c.Param("id"))
-		if err != nil {
-			return RedirectToGame(c)
-		}
-		cells := make([]models.Player, 9)
-		for i := range cells {
-			cells[i] = 0
-		}
-		board := models.Board{Cells: cells}
-		component := views.Index(models.Game{Id: id, Board: board})
-		return component.Render(c.Request().Context(), c.Response().Writer)
+	app := echo.New()
+
+	app.GET("/", func(c echo.Context) error {
+		return c.Redirect(302, "game/")
 	})
-	e.POST("game/:id/cell/:index", func(c echo.Context) error {
-		id, idErr := uuid.Parse(c.Param("id"))
-		if idErr != nil {
-			return idErr
-		}
-		index, indexErr := strconv.Atoi(c.Param("index"))
-		if indexErr != nil {
-			return indexErr
-		}
-		component := components.Cell(index, models.X, id)
-		return component.Render(c.Request().Context(), c.Response().Writer)
+
+	app.GET("/game", func(c echo.Context) error {
+		return c.Redirect(302, "game/")
 	})
-	e.Logger.Fatal(e.Start(":1323"))
+
+	gameHandler := handlers.NewGameHandler(app, db)
+
+	gameHandler.Mount()
+
+	app.Static("/assets", "assets")
+
+	app.Logger.Fatal(app.Start(":1323"))
 }

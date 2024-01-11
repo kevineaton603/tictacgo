@@ -1,11 +1,31 @@
 package components
 import "github.com/kevineaton603/tictacgo/models"
+import "strconv"
 
-templ Board(game models.Game) {
-    <div class="container mx-auto grid grid-cols-3 gap-2">
-    for index, cell := range game.Board.Cells {
-        @Cell(index, cell, game.Id)
-    }
+templ Board(game *models.Game) {
+    <div id="board" class="flex flex-col gap-2">
+        <div class="container mx-auto grid grid-cols-3 gap-2">
+        for index, cell := range game.Cells {
+            <button
+                hx-post={"/game/" + game.Id.String() + "/cell/" + strconv.Itoa(index)}
+                hx-trigger="click"
+                hx-target="#board"
+                class="min-h-20 bg-slate-700 enabled:hover:bg-slate-600 rounded-md data-[winner='true']:border data-[winner='true']:border-slate-50 data-[winner='true']:rounded-md"
+                if cell != 0 || game.Winner != 0 {
+                    disabled
+                }
+                if game.IsCellWinner(index) {
+                    data-winner="true"
+                }
+            >
+                <span class="text-xl">{game.DisplayCellValue(index)}</span>
+                <input type="hidden" value={"cell"} />
+            </button>
+        }
+        </div>
+        if game.Winner != 0 {
+            <div id="game-status" class="text-center p-2 text-xl">{game.DisplayWinnerValue()}</div>
+        }
+        <a href="../" class="w-full p-2 rounded-md bg-slate-700 hover:bg-slate-600 text-center">RESET</a>
     </div>
-    <button class="w-full p-2 rounded-md bg-slate-800 hover:bg-slate-700">RESET</button>
 }
